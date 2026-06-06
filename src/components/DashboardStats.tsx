@@ -1,5 +1,3 @@
-import React from 'react';
-
 interface StatsProps {
   stats: { total: number; pending: number; interviewed: number; passed: number; rejected: number; suspicious: number };
 }

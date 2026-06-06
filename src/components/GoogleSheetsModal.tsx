@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { GOOGLE_APPS_SCRIPT_CODE, DEFAULT_APPS_SCRIPT_URL, DEFAULT_SHEET_URL } from '../constants/crmConstants';
 
 interface GoogleSheetsModalProps {
