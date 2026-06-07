@@ -1,4 +1,4 @@
-import { STATUS_OPTIONS } from '../constants/crmConstants';
+import { CATEGORY_OPTIONS, STATUS_OPTIONS } from '../constants/crmConstants';
 
 interface JobTableProps {
   jobs: any[];
@@ -11,142 +11,255 @@ interface JobTableProps {
 export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onStatusChange }: JobTableProps) {
   if (jobs.length === 0) {
     return (
-      <div className="py-16 text-center bg-white rounded-xl border border-slate-200 shadow-sm">
-        <h3 className="text-slate-600 font-bold">Không tìm thấy dữ liệu</h3>
+      <div className="py-16 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <span className="text-4xl block mb-2">📁</span>
+        <h3 className="text-slate-500 font-bold text-sm">Không tìm thấy dữ liệu tin tuyển dụng</h3>
       </div>
     );
   }
 
   return (
-    <section className="bg-transparent md:bg-white md:rounded-2xl md:border md:border-slate-200 md:shadow-md md:overflow-hidden">
-      
-      {/* --- PHIÊN BẢN MOBILE: HIỂN THỊ DẠNG CARD LIST --- */}
+    <section className="w-full">
+      {/* --- PHIÊN BẢN MOBILE & TABLET --- */}
       <div className="block md:hidden space-y-4">
         {jobs.map((job) => {
           const dupInfo = checkDuplicate(job);
           const statusObj = STATUS_OPTIONS.find(opt => opt.name === job.status) || STATUS_OPTIONS[0];
+          const categoryObj = CATEGORY_OPTIONS.find(opt => opt.value === job.category) || CATEGORY_OPTIONS[CATEGORY_OPTIONS.length - 1];
 
           return (
             <div 
               key={job.id} 
-              className={`bg-white p-4 rounded-xl border shadow-sm transition ${
-                dupInfo.isAnyDup ? 'border-rose-300 bg-rose-50/10' : 'border-slate-200'
+              className={`bg-white p-5 rounded-2xl border transition-all shadow-md relative overflow-hidden ${
+                dupInfo.isAnyDup ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200 shadow-slate-100'
               }`}
             >
-              <div className="flex justify-between items-start gap-2 mb-2">
-                <div>
-                  <h4 className="font-bold text-slate-900 text-base leading-tight">{job.title}</h4>
-                  <span className="text-xs text-slate-500 font-medium">{job.shopName}</span>
+              {dupInfo.isAnyDup && (
+                <div className="absolute top-0 right-0 left-0 bg-rose-500 text-white text-[10px] font-bold uppercase tracking-wider py-1 text-center">
+                  ⚠️ Phát hiện trùng lặp dữ liệu
                 </div>
-                <select
-                  value={job.status} 
-                  onChange={(e) => onStatusChange(job.id, e.target.value)}
-                  className={`text-xs font-bold border rounded-lg px-2 py-1 ${statusObj.color} shrink-0`}
-                >
-                  {STATUS_OPTIONS.map(opt => (
-                    <option key={opt.name} value={opt.name} className="bg-white text-slate-800">{opt.name}</option>
-                  ))}
-                </select>
-              </div>
+              )}
 
-              <p className="text-[11px] text-slate-400 mb-3">Ngày thêm: {job.dateAdded}</p>
+              <div className={dupInfo.isAnyDup ? "pt-4" : ""}>
+                <div className="flex justify-between items-start gap-2 mb-2">
+                  <h4 className="font-bold text-slate-900 text-sm flex-1">{job.title}</h4>
+                  <span className="text-[11px] text-slate-400 shrink-0 font-medium">{job.dateAdded}</span>
+                </div>
 
-              <div className="space-y-2 border-t border-b border-slate-100 py-3 my-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Số điện thoại:</span>
-                  <span className={`font-mono font-semibold px-2 py-0.5 rounded ${
-                    dupInfo.isPhoneDup ? 'bg-rose-100 text-rose-800 border border-rose-200 font-bold' : 'bg-slate-100 text-slate-700'
-                  }`}>
-                    {job.phone || 'N/A'} {dupInfo.isPhoneDup && '⚠️'}
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${categoryObj.color}`}>
+                    {job.category || 'Others'}
                   </span>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Mức lương:</span>
-                  <span className="font-bold text-indigo-700">{job.salary || 'Thỏa thuận'}</span>
+                  <p className="text-xs text-indigo-600 font-semibold">{job.shopName || 'Chưa cập nhật tên shop'}</p>
                 </div>
 
-                <div className="flex flex-col gap-1 pt-1">
-                  <span className="text-slate-400">Địa chỉ làm việc:</span>
-                  <p className={`font-medium ${dupInfo.isAddrDup ? 'text-rose-700 font-bold' : 'text-slate-600'}`}>
-                    {job.address || 'N/A'} {dupInfo.isAddrDup && '⚠️'}
-                  </p>
+                <div className="space-y-2 border-t border-b border-slate-100 py-3 my-3 text-xs text-slate-600">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">📞</span>
+                    <span className={`font-mono font-semibold ${dupInfo.isPhoneDup ? 'text-rose-600 bg-rose-100 px-1 rounded' : ''}`}>
+                      {job.phone || '---'}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 text-sm">📍</span>
+                    <span className={`${dupInfo.isAddrDup ? 'text-rose-600 font-bold bg-rose-100 px-1 rounded' : ''}`}>
+                      {job.address || '---'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">💰</span>
+                    <span className="text-emerald-600 font-bold">{job.salary || 'Thỏa thuận'}</span>
+                  </div>
+                  {job.link && (
+                    <div className="flex items-center gap-2 pt-1 border-t border-slate-50">
+                      <span className="text-sm">🔗</span>
+                      <a href={job.link} target="_blank" rel="noreferrer" className="text-indigo-500 hover:underline font-bold">
+                        Xem link bài đăng gốc
+                      </a>
+                    </div>
+                  )}
                 </div>
-              </div>
 
-              <div className="flex justify-end space-x-2 mt-2">
-                <button onClick={() => onEdit(job)} className="flex items-center space-x-1 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-semibold hover:text-indigo-600">
-                  <span>📝 Sửa</span>
-                </button>
-                <button onClick={() => onDelete(job.id)} className="flex items-center space-x-1 px-3 py-1.5 bg-rose-50 text-rose-500 rounded-lg text-xs font-semibold hover:bg-rose-100">
-                  <span>🗑️ Xóa</span>
-                </button>
+                <div className="space-y-2 mb-4 text-xs whitespace-pre-line text-slate-600">
+                  {job.requirements && (
+                    <div>
+                      <strong className="text-slate-800 block mb-0.5">🔹 Yêu cầu công việc:</strong>
+                      <p className="bg-slate-50 p-2.5 rounded-xl text-slate-600">{job.requirements}</p>
+                    </div>
+                  )}
+                  {job.benefits && (
+                    <div>
+                      <strong className="text-indigo-800 block mb-0.5">🎁 Quyền lợi đãi ngộ:</strong>
+                      <p className="bg-indigo-50/40 p-2.5 rounded-xl text-slate-600">{job.benefits}</p>
+                    </div>
+                  )}
+                  {job.notes && (
+                    <div>
+                      <strong className="text-amber-800 block mb-0.5">📝 Ghi chú cá nhân:</strong>
+                      <p className="bg-amber-50 text-amber-900 p-2.5 rounded-xl border border-amber-100">{job.notes}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                  <select
+                    value={job.status} 
+                    onChange={(e) => onStatusChange(job.id, e.target.value)}
+                    className={`text-[11px] font-bold border rounded-xl px-2 py-1.5 cursor-pointer shadow-sm focus:outline-none ${statusObj.color}`}
+                  >
+                    {STATUS_OPTIONS.map(opt => (
+                      <option key={opt.name} value={opt.name} className="bg-white text-slate-800">{opt.name}</option>
+                    ))}
+                  </select>
+
+                  <div className="flex items-center space-x-2">
+                    <button onClick={() => onEdit(job)} className="p-2 bg-slate-100 text-slate-600 rounded-xl hover:text-indigo-600 hover:bg-indigo-50 transition-colors">📝</button>
+                    <button onClick={() => onDelete(job.id)} className="p-2 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100 transition-colors">🗑️</button>
+                  </div>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* --- PHIÊN BẢN DESKTOP: ĐÃ THAY ĐỔI TÔNG MÀU HEADING SANG SLATE-800 SANG TRỌNG --- */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            {/* THAY ĐỔI TẠI ĐÂY: Sử dụng màu nền tối bg-slate-800 và chữ trắng sáng để tạo tương phản mạnh */}
-            <tr className="bg-slate-800 border-b border-slate-700 text-slate-200 text-xs font-bold uppercase tracking-wider">
-              <th className="py-4 px-6 rounded-tl-2xl">Thông tin công việc</th>
-              <th className="py-4 px-4">Số điện thoại</th>
-              <th className="py-4 px-4">Địa chỉ làm việc</th>
-              <th className="py-4 px-4">Mức lương</th>
-              <th className="py-4 px-4 text-center">Trạng thái</th>
-              <th className="py-4 px-6 text-right rounded-tr-2xl">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200/60 text-sm bg-white">
-            {jobs.map((job) => {
-              const dupInfo = checkDuplicate(job);
-              const statusObj = STATUS_OPTIONS.find(opt => opt.name === job.status) || STATUS_OPTIONS[0];
+      {/* --- PHIÊN BẢN DESKTOP (ĐÃ ĐƯỢC CHỈNH PHÂN TÁCH DÒNG CỰC RÕ) --- */}
+      <div className="hidden md:block bg-white rounded-2xl border-2 border-slate-200 shadow-xl overflow-hidden">
+        <div className="overflow-x-auto w-full">
+          {/* Thay đổi: Thêm `odd:bg-slate-50/60` (xen kẽ dòng xám trắng) và tăng độ dày đường viền chia dòng `divide-y-2` */}
+          <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
+            <thead>
+              <tr className="bg-indigo-900 text-white text-[11px] font-black uppercase tracking-wider">
+                <th className="py-4 px-4 w-[18%] border-r border-indigo-800/50">Vị trí / Cửa hàng</th>
+                <th className="py-4 px-4 w-[15%] border-r border-indigo-800/50">Thông tin liên hệ</th>
+                <th className="py-4 px-4 w-[15%] border-r border-indigo-800/50">Địa chỉ làm việc</th>
+                <th className="py-4 px-4 w-[22%] border-r border-indigo-800/50">Chi tiết tuyển dụng</th>
+                <th className="py-4 px-4 w-[18%] border-r border-indigo-800/50">Ghi chú tiến trình</th>
+                <th className="py-4 px-4 w-[12%] text-center border-r border-indigo-800/50">Trạng thái</th>
+                <th className="py-4 px-4 w-[10%] text-right">Thao tác</th>
+              </tr>
+            </thead>
+            {/* divide-y-2 và divide-slate-200 giúp đường gạch ngang giữa các dòng đậm, rõ ràng hẳn lên */}
+            <tbody className="divide-y-2 divide-slate-200 text-slate-700 text-xs">
+              {jobs.map((job) => {
+                const dupInfo = checkDuplicate(job);
+                const statusObj = STATUS_OPTIONS.find(opt => opt.name === job.status) || STATUS_OPTIONS[0];
+                const categoryObj = CATEGORY_OPTIONS.find(opt => opt.value === job.category) || CATEGORY_OPTIONS[CATEGORY_OPTIONS.length - 1];
 
-              return (
-                <tr key={job.id} className={`hover:bg-slate-50/80 transition-colors ${dupInfo.isAnyDup ? 'bg-rose-50/30' : ''}`}>
-                  <td className="py-4 px-6 max-w-sm">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-slate-900">{job.title}</span>
-                      <span className="text-xs text-slate-500 mt-0.5">{job.shopName}</span>
-                      <span className="text-[11px] text-slate-400 mt-1">Ngày thêm: {job.dateAdded}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className={`font-mono text-xs font-semibold px-2 py-1.5 rounded-lg ${dupInfo.isPhoneDup ? 'bg-rose-100 text-rose-800 border border-rose-300 font-bold' : 'bg-slate-100 text-slate-700'}`}>
-                      {job.phone || 'N/A'} {dupInfo.isPhoneDup && '⚠️'}
-                    </span>
-                  </td>
-                  <td className="py-4 px-4 max-w-xs">
-                    <p className={`text-xs leading-relaxed line-clamp-2 ${dupInfo.isAddrDup ? 'text-rose-700 font-semibold' : 'text-slate-600'}`}>
-                      {job.address || 'N/A'} {dupInfo.isAddrDup && '⚠️'}
-                    </p>
-                  </td>
-                  <td className="py-4 px-4">
-                    <span className="text-xs font-bold text-indigo-700">{job.salary || 'Thỏa thuận'}</span>
-                  </td>
-                  <td className="py-4 px-4 text-center">
-                    <select
-                      value={job.status} onChange={(e) => onStatusChange(job.id, e.target.value)}
-                      className={`text-xs font-bold border rounded-lg px-2.5 py-1.5 ${statusObj.color}`}
-                    >
-                      {STATUS_OPTIONS.map(opt => <option key={opt.name} value={opt.name} className="bg-white text-slate-800">{opt.name}</option>)}
-                    </select>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <button onClick={() => onEdit(job)} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:text-indigo-600 hover:bg-indigo-50 transition-colors">📝</button>
-                      <button onClick={() => onDelete(job.id)} className="p-2 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr 
+                    key={job.id} 
+                    className={`
+                      transition-all duration-150
+                      odd:bg-white even:bg-slate-50/70 
+                      hover:bg-indigo-50/60 hover:shadow-inner
+                      ${dupInfo.isAnyDup ? '!bg-rose-100/50 border-l-4 border-l-rose-500' : 'border-l-4 border-l-transparent'}
+                    `}
+                  >
+                    {/* Cột 1: Vị trí & Cửa hàng */}
+                    <td className="py-5 px-4 align-top border-r border-slate-200/60">
+                      <div className="font-bold text-slate-900 text-sm break-words">{job.title}</div>
+                      <div className="text-slate-600 font-semibold mt-1.5 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${categoryObj.color}`}>
+                            {job.category || 'Others'}
+                          </span>
+                          <span className="flex items-center gap-1 text-indigo-950 break-words">
+                            <span>🏪</span> {job.shopName || '---'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-3 font-mono bg-slate-200/50 px-2 py-0.5 rounded inline-block">📅 {job.dateAdded}</div>
+                    </td>
+
+                    {/* Cột 2: Liên hệ */}
+                    <td className="py-5 px-4 align-top space-y-2.5 border-r border-slate-200/60">
+                      <div className={`font-mono font-bold text-xs px-2 py-1 rounded-lg ${
+                        dupInfo.isPhoneDup ? 'text-rose-700 bg-rose-200' : 'text-slate-800 bg-slate-200/60'
+                      }`}>
+                        📞 {job.phone || '---'}
+                      </div>
+                      <div className="pt-0.5">
+                        {job.link ? (
+                          <a 
+                            href={job.link} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="inline-flex items-center gap-1 text-indigo-700 hover:text-white font-bold bg-indigo-50 hover:bg-indigo-600 border border-indigo-200 px-2.5 py-1 rounded-xl text-[11px] transition-all shadow-sm"
+                          >
+                            <span>Link bài đăng 🔗</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-300 italic text-[10px]">Không có link</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Cột 3: Địa chỉ */}
+                    <td className="py-5 px-4 align-top border-r border-slate-200/60">
+                      <div className={`text-slate-700 font-medium leading-relaxed break-words ${
+                        dupInfo.isAddrDup ? 'text-rose-700 font-bold bg-rose-100 px-1.5 py-0.5 rounded' : ''
+                      }`}>
+                        📍 {job.address || '---'}
+                      </div>
+                    </td>
+
+                    {/* Cột 4: Chi tiết tuyển dụng */}
+                    <td className="py-5 px-4 align-top space-y-3 border-r border-slate-200/60">
+                      <div className="text-slate-700 flex items-center gap-1.5">
+                        <span className="text-emerald-800 font-bold bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-lg text-[10px]">💰 LƯƠNG:</span>
+                        <span className="font-extrabold text-emerald-700 text-sm">{job.salary || 'Thỏa thuận'}</span>
+                      </div>
+                      {job.requirements && (
+                        <div className="text-slate-600 leading-relaxed whitespace-pre-line bg-white p-3 rounded-xl text-[11px] border border-slate-200/80 shadow-sm">
+                          <strong className="text-slate-800 block border-b border-slate-200 pb-1 mb-1 font-bold">🔹 Yêu cầu:</strong>
+                          {job.requirements}
+                        </div>
+                      )}
+                      {job.benefits && (
+                        <div className="text-slate-600 leading-relaxed whitespace-pre-line bg-indigo-50/50 p-3 rounded-xl text-[11px] border border-indigo-100/80 shadow-sm">
+                          <strong className="text-indigo-900 block border-b border-indigo-100 pb-1 mb-1 font-bold">🎁 Quyền lợi:</strong>
+                          {job.benefits}
+                        </div>
+                      )}
+                    </td>
+
+                    {/* Cột 5: Ghi chú */}
+                    <td className="py-5 px-4 align-top border-r border-slate-200/60">
+                      <div className="bg-amber-50/80 text-amber-950 p-3 rounded-xl border-2 border-amber-200/60 text-[11px] whitespace-pre-line leading-relaxed shadow-sm">
+                        <strong className="text-amber-900 block border-b border-amber-200 pb-1 mb-1 font-bold">📝 Nhật ký HR:</strong>
+                        {job.notes || <span className="text-amber-400 italic font-normal">Chưa viết ghi chú...</span>}
+                      </div>
+                    </td>
+
+                    {/* Cột 6: Trạng thái */}
+                    <td className="py-5 px-4 align-top text-center border-r border-slate-200/60">
+                      <div className="flex justify-center pt-1">
+                        <select
+                          value={job.status} 
+                          onChange={(e) => onStatusChange(job.id, e.target.value)}
+                          className={`text-[11px] font-black border-2 rounded-xl px-2.5 py-1.5 cursor-pointer shadow-md transition-all focus:outline-none ${statusObj.color}`}
+                        >
+                          {STATUS_OPTIONS.map(opt => (
+                            <option key={opt.name} value={opt.name} className="bg-white text-slate-800 font-bold">{opt.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
+
+                    {/* Cột 7: Thao tác */}
+                    <td className="py-5 px-4 align-top text-right">
+                      <div className="flex items-center justify-end space-x-1.5 pt-1">
+                        <button onClick={() => onEdit(job)} className="p-2 bg-slate-100 hover:bg-indigo-600 text-slate-600 hover:text-white rounded-xl transition-all border border-slate-200 shadow-sm" title="Sửa">📝</button>
+                        <button onClick={() => onDelete(job.id)} className="p-2 bg-rose-50 hover:bg-rose-600 text-rose-500 hover:text-white rounded-xl transition-all border border-rose-200 shadow-sm" title="Xóa">🗑️</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );
