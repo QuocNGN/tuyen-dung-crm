@@ -9,6 +9,31 @@ interface JobTableProps {
 }
 
 export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onStatusChange }: JobTableProps) {
+  
+  // Hàm bổ trợ bóc tách và hiển thị nhiều chi nhánh/địa chỉ một cách trực quan
+  const renderAddress = (addressStr: string, isAddrDup: boolean) => {
+    if (!addressStr) return <span>---</span>;
+
+    // Tách chuỗi bằng dấu chấm phẩy hoặc dấu xuống dòng
+    const branches = addressStr.split(/[;\n]+/).map(b => b.trim()).filter(b => b.length > 0);
+
+    return (
+      <div className="space-y-1.5">
+        {branches.map((branch, index) => (
+          <div 
+            key={index} 
+            className={`flex items-start gap-1.5 leading-relaxed break-words ${
+              isAddrDup ? 'text-rose-700 font-bold bg-rose-100 px-1.5 py-0.5 rounded' : 'text-slate-700 font-medium'
+            }`}
+          >
+            <span className="mt-0.5 text-xs shrink-0">📍</span>
+            <span>{branch}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (jobs.length === 0) {
     return (
       <div className="py-16 text-center bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -53,19 +78,19 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
                   <p className="text-xs text-indigo-600 font-semibold">{job.shopName || 'Chưa cập nhật tên shop'}</p>
                 </div>
 
-                <div className="space-y-2 border-t border-b border-slate-100 py-3 my-3 text-xs text-slate-600">
+                <div className="space-y-2.5 border-t border-b border-slate-100 py-3 my-3 text-xs text-slate-600">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">📞</span>
                     <span className={`font-mono font-semibold ${dupInfo.isPhoneDup ? 'text-rose-600 bg-rose-100 px-1 rounded' : ''}`}>
                       {job.phone || '---'}
                     </span>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <span className="mt-0.5 text-sm">📍</span>
-                    <span className={`${dupInfo.isAddrDup ? 'text-rose-600 font-bold bg-rose-100 px-1 rounded' : ''}`}>
-                      {job.address || '---'}
-                    </span>
+                  
+                  {/* Khu vực địa chỉ phiên bản Mobile */}
+                  <div>
+                    {renderAddress(job.address, dupInfo.isAddrDup)}
                   </div>
+
                   <div className="flex items-center gap-2">
                     <span className="text-sm">💰</span>
                     <span className="text-emerald-600 font-bold">{job.salary || 'Thỏa thuận'}</span>
@@ -123,23 +148,21 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
         })}
       </div>
 
-      {/* --- PHIÊN BẢN DESKTOP (ĐÃ ĐƯỢC CHỈNH PHÂN TÁCH DÒNG CỰC RÕ) --- */}
+      {/* --- PHIÊN BẢN DESKTOP --- */}
       <div className="hidden md:block bg-white rounded-2xl border-2 border-slate-200 shadow-xl overflow-hidden">
         <div className="overflow-x-auto w-full">
-          {/* Thay đổi: Thêm `odd:bg-slate-50/60` (xen kẽ dòng xám trắng) và tăng độ dày đường viền chia dòng `divide-y-2` */}
           <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
             <thead>
               <tr className="bg-indigo-900 text-white text-[11px] font-black uppercase tracking-wider">
                 <th className="py-4 px-4 w-[18%] border-r border-indigo-800/50">Vị trí / Cửa hàng</th>
                 <th className="py-4 px-4 w-[15%] border-r border-indigo-800/50">Thông tin liên hệ</th>
-                <th className="py-4 px-4 w-[15%] border-r border-indigo-800/50">Địa chỉ làm việc</th>
-                <th className="py-4 px-4 w-[22%] border-r border-indigo-800/50">Chi tiết tuyển dụng</th>
-                <th className="py-4 px-4 w-[18%] border-r border-indigo-800/50">Ghi chú tiến trình</th>
+                <th className="py-4 px-4 w-[17%] border-r border-indigo-800/50">Địa chỉ làm việc</th>
+                <th className="py-4 px-4 w-[21%] border-r border-indigo-800/50">Chi tiết tuyển dụng</th>
+                <th className="py-4 px-4 w-[17%] border-r border-indigo-800/50">Ghi chú tiến trình</th>
                 <th className="py-4 px-4 w-[12%] text-center border-r border-indigo-800/50">Trạng thái</th>
                 <th className="py-4 px-4 w-[10%] text-right">Thao tác</th>
               </tr>
             </thead>
-            {/* divide-y-2 và divide-slate-200 giúp đường gạch ngang giữa các dòng đậm, rõ ràng hẳn lên */}
             <tbody className="divide-y-2 divide-slate-200 text-slate-700 text-xs">
               {jobs.map((job) => {
                 const dupInfo = checkDuplicate(job);
@@ -195,13 +218,9 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
                       </div>
                     </td>
 
-                    {/* Cột 3: Địa chỉ */}
+                    {/* Cột 3: Địa chỉ làm việc (Đã áp dụng render tách dòng thông minh) */}
                     <td className="py-5 px-4 align-top border-r border-slate-200/60">
-                      <div className={`text-slate-700 font-medium leading-relaxed break-words ${
-                        dupInfo.isAddrDup ? 'text-rose-700 font-bold bg-rose-100 px-1.5 py-0.5 rounded' : ''
-                      }`}>
-                        📍 {job.address || '---'}
-                      </div>
+                      {renderAddress(job.address, dupInfo.isAddrDup)}
                     </td>
 
                     {/* Cột 4: Chi tiết tuyển dụng */}
