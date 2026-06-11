@@ -10,13 +10,10 @@ interface JobTableProps {
 
 export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onStatusChange }: JobTableProps) {
   
-  // Hàm bổ trợ bóc tách và hiển thị nhiều chi nhánh/địa chỉ một cách trực quan
+  // 1. Hàm tách chi nhánh địa chỉ (Giữ nguyên tính năng cũ của bạn)
   const renderAddress = (addressStr: string, isAddrDup: boolean) => {
     if (!addressStr) return <span>---</span>;
-
-    // Tách chuỗi bằng dấu chấm phẩy hoặc dấu xuống dòng
     const branches = addressStr.split(/[;\n]+/).map(b => b.trim()).filter(b => b.length > 0);
-
     return (
       <div className="space-y-1.5">
         {branches.map((branch, index) => (
@@ -31,6 +28,45 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
           </div>
         ))}
       </div>
+    );
+  };
+
+  // 2. TÍNH NĂNG MỚI: Tự động format text xuống dòng thành list và highlight từ khóa
+  const formatContentText = (text: string, bulletIcon: string = '•') => {
+    if (!text) return null;
+
+    // Tách văn bản thành từng dòng dựa trên ký tự xuống dòng
+    const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+
+    // Danh sách các từ khóa cần làm nổi bật để cuốn hút người xem
+    const keywords = [
+      /kinh nghiệm/gi, /sinh viên/gi, /xoay ca/gi, /part[- ]*time/gi, /full[- ]*time/gi,
+      /thưởng/gi, /phụ cấp/gi, /tuyển gấp/gi, /cần gấp/gi, /trung thực/gi, /lương/gi,
+      /phỏng vấn/gi, /chủ shop/gi, /hẹn lịch/gi, /gọi lại/gi, /yêu cầu/gi, /quyền lợi/gi
+    ];
+
+    // Hàm nhỏ hỗ trợ bọc từ khóa trong thẻ <strong> để làm nổi bật
+    const highlightKeywords = (inputText: string) => {
+      let htmlText = inputText;
+      keywords.forEach(regex => {
+        htmlText = htmlText.replace(regex, (match) => `<strong class="text-slate-900 font-extrabold bg-amber-100/60 px-0.5 rounded">${match}</strong>`);
+      });
+      return <span dangerouslySetInnerHTML={{ __html: htmlText }} />;
+    };
+
+    return (
+      <ul className="space-y-1 mt-1 text-left">
+        {lines.map((line, idx) => {
+          // Nếu dòng đã bắt đầu bằng các ký tự đặc biệt như -, *, •, ✔ thì không thêm trùng nữa
+          const hasBullet = /^[-*•✔📌🔹🎁📝]/.test(line);
+          return (
+            <li key={idx} className="flex items-start gap-1.5 leading-relaxed break-words">
+              {!hasBullet && <span className="text-slate-400 font-bold shrink-0 mt-0.5 text-[10px]">{bulletIcon}</span>}
+              <span className="text-slate-600 flex-1 text-[11px]">{highlightKeywords(line)}</span>
+            </li>
+          );
+        })}
+      </ul>
     );
   };
 
@@ -86,7 +122,6 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
                     </span>
                   </div>
                   
-                  {/* Khu vực địa chỉ phiên bản Mobile */}
                   <div>
                     {renderAddress(job.address, dupInfo.isAddrDup)}
                   </div>
@@ -105,23 +140,30 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
                   )}
                 </div>
 
-                <div className="space-y-2 mb-4 text-xs whitespace-pre-line text-slate-600">
+                {/* Phần nội dung chi tiết không giới hạn chữ trên Mobile kèm format đẹp */}
+                <div className="space-y-3 mb-4 text-xs">
                   {job.requirements && (
-                    <div>
-                      <strong className="text-slate-800 block mb-0.5">🔹 Yêu cầu công việc:</strong>
-                      <p className="bg-slate-50 p-2.5 rounded-xl text-slate-600">{job.requirements}</p>
+                    <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-200/50">
+                      <strong className="text-slate-800 flex items-center gap-1 font-bold text-[11px] border-b border-slate-200 pb-1 mb-1">
+                        <span>🔹</span> Yêu cầu công việc:
+                      </strong>
+                      {formatContentText(job.requirements, '-')}
                     </div>
                   )}
                   {job.benefits && (
-                    <div>
-                      <strong className="text-indigo-800 block mb-0.5">🎁 Quyền lợi đãi ngộ:</strong>
-                      <p className="bg-indigo-50/40 p-2.5 rounded-xl text-slate-600">{job.benefits}</p>
+                    <div className="bg-indigo-50/40 p-3 rounded-xl border border-indigo-100/40">
+                      <strong className="text-indigo-900 flex items-center gap-1 font-bold text-[11px] border-b border-indigo-100 pb-1 mb-1">
+                        <span>🎁</span> Quyền lợi đãi ngộ:
+                      </strong>
+                      {formatContentText(job.benefits, '✔')}
                     </div>
                   )}
                   {job.notes && (
-                    <div>
-                      <strong className="text-amber-800 block mb-0.5">📝 Ghi chú cá nhân:</strong>
-                      <p className="bg-amber-50 text-amber-900 p-2.5 rounded-xl border border-amber-100">{job.notes}</p>
+                    <div className="bg-amber-50 text-amber-900 p-3 rounded-xl border border-amber-200/60">
+                      <strong className="text-amber-900 flex items-center gap-1 font-bold text-[11px] border-b border-amber-200 pb-1 mb-1">
+                        <span>📝</span> Ghi chú cá nhân:
+                      </strong>
+                      {formatContentText(job.notes, '📌')}
                     </div>
                   )}
                 </div>
@@ -151,13 +193,13 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
       {/* --- PHIÊN BẢN DESKTOP --- */}
       <div className="hidden md:block bg-white rounded-2xl border-2 border-slate-200 shadow-xl overflow-hidden">
         <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse table-fixed min-w-[1200px]">
+          <table className="w-full text-left border-collapse table-fixed min-w-[1250px]">
             <thead>
               <tr className="bg-indigo-900 text-white text-[11px] font-black uppercase tracking-wider">
-                <th className="py-4 px-4 w-[18%] border-r border-indigo-800/50">Vị trí / Cửa hàng</th>
-                <th className="py-4 px-4 w-[15%] border-r border-indigo-800/50">Thông tin liên hệ</th>
-                <th className="py-4 px-4 w-[17%] border-r border-indigo-800/50">Địa chỉ làm việc</th>
-                <th className="py-4 px-4 w-[21%] border-r border-indigo-800/50">Chi tiết tuyển dụng</th>
+                <th className="py-4 px-4 w-[17%] border-r border-indigo-800/50">Vị trí / Cửa hàng</th>
+                <th className="py-4 px-4 w-[14%] border-r border-indigo-800/50">Thông tin liên hệ</th>
+                <th className="py-4 px-4 w-[16%] border-r border-indigo-800/50">Địa chỉ làm việc</th>
+                <th className="py-4 px-4 w-[24%] border-r border-indigo-800/50">Chi tiết tuyển dụng</th>
                 <th className="py-4 px-4 w-[17%] border-r border-indigo-800/50">Ghi chú tiến trình</th>
                 <th className="py-4 px-4 w-[12%] text-center border-r border-indigo-800/50">Trạng thái</th>
                 <th className="py-4 px-4 w-[10%] text-right">Thao tác</th>
@@ -218,36 +260,36 @@ export default function JobTable({ jobs, checkDuplicate, onEdit, onDelete, onSta
                       </div>
                     </td>
 
-                    {/* Cột 3: Địa chỉ làm việc (Đã áp dụng render tách dòng thông minh) */}
+                    {/* Cột 3: Địa chỉ làm việc */}
                     <td className="py-5 px-4 align-top border-r border-slate-200/60">
                       {renderAddress(job.address, dupInfo.isAddrDup)}
                     </td>
 
-                    {/* Cột 4: Chi tiết tuyển dụng */}
+                    {/* Cột 4: Chi tiết tuyển dụng (Không giới hạn nội dung + Format Đẹp) */}
                     <td className="py-5 px-4 align-top space-y-3 border-r border-slate-200/60">
                       <div className="text-slate-700 flex items-center gap-1.5">
                         <span className="text-emerald-800 font-bold bg-emerald-100/80 border border-emerald-200 px-2 py-0.5 rounded-lg text-[10px]">💰 LƯƠNG:</span>
                         <span className="font-extrabold text-emerald-700 text-sm">{job.salary || 'Thỏa thuận'}</span>
                       </div>
                       {job.requirements && (
-                        <div className="text-slate-600 leading-relaxed whitespace-pre-line bg-white p-3 rounded-xl text-[11px] border border-slate-200/80 shadow-sm">
-                          <strong className="text-slate-800 block border-b border-slate-200 pb-1 mb-1 font-bold">🔹 Yêu cầu:</strong>
-                          {job.requirements}
+                        <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-sm max-h-[300px] overflow-y-auto custom-scrollbar">
+                          <strong className="text-slate-800 block border-b border-slate-200 pb-1 mb-1 font-bold text-[11px]">🔹 Yêu cầu:</strong>
+                          {formatContentText(job.requirements, '-')}
                         </div>
                       )}
                       {job.benefits && (
-                        <div className="text-slate-600 leading-relaxed whitespace-pre-line bg-indigo-50/50 p-3 rounded-xl text-[11px] border border-indigo-100/80 shadow-sm">
-                          <strong className="text-indigo-900 block border-b border-indigo-100 pb-1 mb-1 font-bold">🎁 Quyền lợi:</strong>
-                          {job.benefits}
+                        <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100/80 shadow-sm max-h-[300px] overflow-y-auto custom-scrollbar">
+                          <strong className="text-indigo-900 block border-b border-indigo-100 pb-1 mb-1 font-bold text-[11px]">🎁 Quyền lợi:</strong>
+                          {formatContentText(job.benefits, '✔')}
                         </div>
                       )}
                     </td>
 
                     {/* Cột 5: Ghi chú */}
                     <td className="py-5 px-4 align-top border-r border-slate-200/60">
-                      <div className="bg-amber-50/80 text-amber-950 p-3 rounded-xl border-2 border-amber-200/60 text-[11px] whitespace-pre-line leading-relaxed shadow-sm">
-                        <strong className="text-amber-900 block border-b border-amber-200 pb-1 mb-1 font-bold">📝 Nhật ký HR:</strong>
-                        {job.notes || <span className="text-amber-400 italic font-normal">Chưa viết ghi chú...</span>}
+                      <div className="bg-amber-50/80 text-amber-950 p-3 rounded-xl border-2 border-amber-200/60 max-h-[400px] overflow-y-auto custom-scrollbar shadow-sm">
+                        <strong className="text-amber-900 block border-b border-amber-200 pb-1 mb-1 font-bold text-[11px]">📝 Nhật ký HR:</strong>
+                        {job.notes ? formatContentText(job.notes, '📌') : <span className="text-amber-400 italic font-normal">Chưa viết ghi chú...</span>}
                       </div>
                     </td>
 
